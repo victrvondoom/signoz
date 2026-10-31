@@ -303,10 +303,10 @@ describe('PrivateRoute', () => {
 		it.each([
 			['/logs-save-views', ROUTES.LOGS_EXPLORER],
 			['/traces-save-views', ROUTES.TRACES_EXPLORER],
-			[ROUTES.LOGS_SAVE_VIEWS, ROUTES.LOGS_EXPLORER],
-			[ROUTES.TRACES_SAVE_VIEWS, ROUTES.TRACES_EXPLORER],
-			[ROUTES.METRICS_EXPLORER_VIEWS, ROUTES.METRICS_EXPLORER_EXPLORER],
-			[ROUTES.METER_EXPLORER_VIEWS, ROUTES.METER_EXPLORER],
+			['/logs/saved-views', ROUTES.LOGS_EXPLORER],
+			['/traces/saved-views', ROUTES.TRACES_EXPLORER],
+			['/metrics-explorer/views', ROUTES.METRICS_EXPLORER_EXPLORER],
+			['/meter/explorer/views', ROUTES.METER_EXPLORER],
 		])('should redirect the old views route %s to %s', (from, to) => {
 			renderPrivateRoute({ initialRoute: from });
 
@@ -1451,10 +1451,9 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
 		});
 
-		it('should redirect VIEWER from /alerts/channels/new (ADMIN only)', async () => {
-			// After moving channels under /alerts, CHANNELS_NEW ('/alerts/channels/new')
-			// is an exact, ADMIN-only route with no overlapping non-exact ALL_CHANNELS
-			// route to match last, so a VIEWER is now correctly redirected.
+		it('lets a VIEWER reach /alerts/channels/new, which authz then gates', () => {
+			// CHANNELS_NEW runs on fine-grained authz, so the router no longer decides
+			// on the role: the page's own guard denies when `create` is not granted.
 			renderPrivateRoute({
 				initialRoute: ROUTES.CHANNELS_NEW,
 				appContext: {
@@ -1463,7 +1462,7 @@ describe('PrivateRoute', () => {
 				},
 			});
 
-			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
+			assertStaysOnRoute(ROUTES.CHANNELS_NEW);
 		});
 
 		it('should allow EDITOR to access /get-started-with-signoz-cloud route', () => {
@@ -1547,6 +1546,11 @@ describe('PrivateRoute', () => {
 			keyof typeof routeWithInitialAuthZSupport,
 			AuthzRouteCase
 		> = {
+			CHANNELS_NEW: { path: ROUTES.CHANNELS_NEW, deniedRoles: DENIED_ROLES },
+			CHANNELS_EDIT: {
+				path: ROUTES.CHANNELS_EDIT.replace(':channelId', 'channel-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
 			ALL_DASHBOARD: { path: ROUTES.ALL_DASHBOARD, deniedRoles: DENIED_ROLES },
 			DASHBOARD: {
 				path: ROUTES.DASHBOARD.replace(':dashboardId', 'dashboard-id-1'),

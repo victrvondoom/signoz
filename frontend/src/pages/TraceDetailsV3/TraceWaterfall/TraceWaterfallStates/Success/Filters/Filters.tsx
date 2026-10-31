@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
@@ -12,6 +12,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -163,21 +164,18 @@ function Filters({
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 
-	const { search } = useLocation();
-	const history = useHistory();
-
 	const handlePrevNext = useCallback(
 		(index: number, spanId?: string): void => {
-			const searchParams = new URLSearchParams(search);
+			const searchParams = getUnstableCurrentSearchParams();
 			if (spanId) {
 				searchParams.set('spanId', spanId);
 			} else {
 				searchParams.set('spanId', filteredSpanIds[index]);
 			}
 
-			history.replace({ search: searchParams.toString() });
+			navigate({ search: searchParams.toString() }, { replace: true });
 		},
-		[filteredSpanIds, history, search],
+		[filteredSpanIds],
 	);
 
 	const isFilterActive = committedExpression.trim().length > 0;
